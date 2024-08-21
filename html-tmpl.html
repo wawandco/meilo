@@ -1,0 +1,27 @@
+
+
+<!DOCTYPE html>
+<html lang="en" class="h-screen">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<title>Email</title>
+</head>
+<body class="h-full w-full flex  items-center justify-center">
+	<div class="h-full w-[1000px] border">
+		<div class="email-information bg-white p-4 border-b ">
+			<p><span class="font-bold">From:</span> %v </p>
+			<p><span class="font-bold">To:</span> %v </p>
+			<p><span class="font-bold">Cc:</span> %v </p>
+			<p><span class="font-bold">Bcc:</span> %v </p>
+			<p><span class="font-bold">Subject:</span> %v</p>
+			{{range $i, $v := .}}
+				<p><span class="font-bold">Attachment: </span><a href="{{ $v.Path}}" class="underline text-blue-500" download="{{ $v.Path}}">{{ $v.Name }}</a></p>
+			{{end}}
+		</div>
+	
+		<iframe  class="w-full h-full"  srcdoc="%v"></iframe>
+	</div>
+</body>
+</html>

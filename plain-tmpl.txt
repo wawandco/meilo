@@ -1,0 +1,8 @@
+From: %v <br>
+To: %v <br>
+Cc: %v <br>
+Bcc: %v <br>
+Subject: %v <br>
+----------------------------
+<br>
+%v
