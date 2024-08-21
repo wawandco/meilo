@@ -18,12 +18,10 @@ You have the ability to set the options for the SMTP server, these are totally o
 ```go
 // Start the SMTP server
 creds, err := meilo.Start(
-	// Sender options
-	meilo.WithSenderOptions(
-		meilo.WithDir(os.Getenv("TMP_DIR")),
-	),
+	// Directory to put the files
+	meilo.WithDir("/my/emails/folder"),
 
-	// SMTP server options
+	// Port to use
 	meilo.WithPort("1025"),
 )
  
