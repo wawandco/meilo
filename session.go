@@ -15,7 +15,6 @@ var e = email{}
 type session struct {
 	username string
 	password string
-	sender   *sender
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is supported.
@@ -61,7 +60,7 @@ func (s *session) Reset() {
 	}
 
 	log.Println("Sending email...")
-	if err := s.sender.Send(e); err != nil {
+	if err := send(e); err != nil {
 		log.Printf("meilo: failed to send email: %v", err)
 	}
 
