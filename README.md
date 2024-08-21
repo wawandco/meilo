@@ -11,8 +11,7 @@ go get github.com/wawandco/meilo
 ```
 
 ## Usage
-1.  Create a new instance of Meilo
-
+### Create a new instance of Meilo
 You have the ability to set the options for the SMTP server, these are totally optional, if you don't set them, Meilo will use the default values.
 
 ```go
@@ -20,36 +19,35 @@ You have the ability to set the options for the SMTP server, these are totally o
 creds, err := meilo.Start(
 	// Directory to put the files
 	meilo.WithDir("/my/emails/folder"),
-
 	// Port to use
 	meilo.WithPort("1025"),
 )
  
 if err != nil {
-	// Handle the error
+	// Handle the error starting the server.
 	...
 }
 ```
 This will start the SMTP server and return the credentials to be used in the email sending process.
 
-2.  Send an email using the SMTP server
+### Send an email using the SMTP server
 
 ```go
 //Then you can use the credentials to build the SMTP auth 
 auth := smtp.PlainAuth("", creds.User, creds.Password, creds.Host),
-body:= []byte("Hello from meilo!")
 from := "username@example.com"
 to:= []string{"example@example.com"}
+body:= []byte("Hello from meilo!")
 
 // And then the creds instance has an Addr method to use when sending
-err = smtp.SendMail(creds.Addr() auth, from ,to, body)
+err = smtp.SendMail(creds.Addr(), auth, from ,to, body)
 if err != nil {
         // Handle the sending error
         ...
 
 }
 ```
-### Options explained
+## Options
 
 ##### `meilo.WithDir(directory)`
 Allows to specify the directory where the emails will be stored, by default it will use the system's temporary directory.
