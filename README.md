@@ -46,7 +46,7 @@ err = smtp.SendMail(
 	creds.Addr(), 				    // Addr
 	smtp.PlainAuth("", creds.User, creds.Password, creds.Host), // Authentication
 
-    "username@example.com", 		// From
+    	"username@example.com", 		// From
 	[]string{"example@example.com"}, 	// To
 	
 	[]byte("Hello from meilo!"), // Body
