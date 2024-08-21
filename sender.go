@@ -30,7 +30,7 @@ var (
 	//go:embed html-tmpl.html
 	htmlTemplate string
 
-	//dir
+	//dir is the directory where the email body will be saved before opening in the browser
 	dir string = os.TempDir()
 )
 
