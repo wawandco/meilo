@@ -25,10 +25,7 @@ creds, err := meilo.Start(
 	),
 
 	// SMTP server options
-	meilo.WithHost("smtp.example.com"),
-	meilo.WithUser("example@emai.com"),
 	meilo.WithPort("1025"),
-	meilo.WithPassword("password"),
 )
  
 if err != nil {
@@ -66,11 +63,6 @@ if err != nil {
 
 - `meilo.WithHost("smtp.example.com")`: allows you to specify the host of the SMTP server.
 
-- `meilo.WithUser("user@user.com")`: allows you to specify the user of the SMTP server.
-
-- `meilo.WithPort("1025")`: allows you to specify the port of the SMTP server.
-
-- `meilo.WithPassword("password")`: allows you to specify the password of the SMTP server.
 
 
 ## Roadmap / Ideas
