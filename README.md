@@ -42,12 +42,20 @@ This will start the SMTP server and return the credentials to be used in the ema
 
 ```go
 //Then you can use the credentials to send an email
-auth := smtp.PlainAuth("", creds.User, creds.Password, creds.Host)
+err = smtp.SendMail(
+	creds.Host + ":" + creds.Port, 				    // Addr
+	smtp.PlainAuth("", creds.User, creds.Password, creds.Host), // Authentication
 
-addr := creds.Host + ":" + creds.Port
-err = smtp.SendMail(addr, auth, "username@example.com", []string{"example@example.com"}, []byte("Hello from meilo!"))
+        "username@example.com", 		// From
+	[]string{"example@example.com"}, 	// To
+	
+	[]byte("Hello from meilo!"), // Body
+)
+
 if err != nil {
-	return
+        // Handle the sending error
+        ...
+
 }
 ```
 ### Options explained
