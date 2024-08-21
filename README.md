@@ -5,3 +5,10 @@ this allows development workflows where ONLY the SMTP credentials are changed.
 ## Usage
 
 [TODO]
+
+## Roadmap / Ideas
+- Web interface
+- UI Improvements.
+- Deployable service for Staging/Testing.
+- Listing historically sent emails.
+
