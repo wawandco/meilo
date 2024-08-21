@@ -21,9 +21,3 @@ func WithDir(dir string) senderOption {
 		s.dir = dir
 	}
 }
-
-func Only(contentTypes []string) senderOption {
-	return func(s *sender) {
-		s.openContentTypes = contentTypes
-	}
-}
