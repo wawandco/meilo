@@ -17,7 +17,7 @@ You have the ability to set the options for the SMTP server, these are totally o
 
 ```go
 // Start the SMTP server
-mailoCredentials, err := meilo.Start(
+creds, err := meilo.Start(
 	// Sender options
 	meilo.WithSenderOptions(
 		meilo.Only([]string{"text/html", "text/plain"}),
@@ -42,9 +42,9 @@ This will start the SMTP server and return the credentials to be used in the ema
 
 ```go
 //Then you can use the credentials to send an email
-auth := smtp.PlainAuth("", mailoCredentials.User, mailoCredentials.Password, mailoCredentials.Host)
+auth := smtp.PlainAuth("", creds.User, creds.Password, creds.Host)
 
-addr := mailoCredentials.Host + ":" + mailoCredentials.Port
+addr := creds.Host + ":" + creds.Port
 err = smtp.SendMail(addr, auth, "username@example.com", []string{"example@example.com"}, []byte("Hello from meilo!"))
 if err != nil {
 	return
