@@ -25,6 +25,10 @@ func (bkd *server) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	}, nil
 }
 
+func (bkd *server) Addr() string {
+	return bkd.Host + ":" + bkd.Port
+}
+
 // Start starts the SMTP server with the given options.
 func (bkd *server) run() error {
 	stp := smtp.NewServer(bkd)

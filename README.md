@@ -43,10 +43,10 @@ This will start the SMTP server and return the credentials to be used in the ema
 ```go
 //Then you can use the credentials to send an email
 err = smtp.SendMail(
-	creds.Host + ":" + creds.Port, 				    // Addr
+	creds.Addr(), 				    // Addr
 	smtp.PlainAuth("", creds.User, creds.Password, creds.Host), // Authentication
 
-        "username@example.com", 		// From
+    "username@example.com", 		// From
 	[]string{"example@example.com"}, 	// To
 	
 	[]byte("Hello from meilo!"), // Body
