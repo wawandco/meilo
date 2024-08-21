@@ -20,7 +20,6 @@ You have the ability to set the options for the SMTP server, these are totally o
 creds, err := meilo.Start(
 	// Sender options
 	meilo.WithSenderOptions(
-		meilo.Only([]string{"text/html", "text/plain"}),
 		meilo.WithDir(os.Getenv("TMP_DIR")),
 	),
 
@@ -56,8 +55,6 @@ if err != nil {
 }
 ```
 ### Options explained
-
-- `meilo.Only([]string{"text/html", "text/plain"})`: allows you to specify which content types you want to open in the browser, by default it will open all content types.
 
 - `meilo.WithDir(os.Getenv("TMP_DIR"))`: allows you to specify the directory where the emails will be stored, by default it will use the system's temporary directory.
 

@@ -27,33 +27,17 @@ var genID = func() string {
 }
 
 var (
-
 	//go:embed html-tmpl.html
 	htmlTemplate string
-
-	//go:embed plain-tmpl.txt
-	plainTemplate string
-
-	// config used to write the email body to files
-	// depending on the type we need to do a few things differently.
-	config = map[string]contentConfig{
-		textHtml: {
-			template: htmlTemplate,
-		},
-
-		textPlain: {
-			template: plainTemplate,
-		},
-	}
 )
 
-type contentConfig struct {
-	template string
+type templConfig struct {
+	Bodies      []body
+	Attachments []attachment
 }
 
 type sender struct {
-	dir              string
-	openContentTypes []string
+	dir string
 }
 
 func newSender(opts ...senderOption) *sender {
@@ -68,71 +52,57 @@ func newSender(opts ...senderOption) *sender {
 	return s
 }
 
-func (snder *sender) open(contentType string) bool {
-	if len(snder.openContentTypes) == 0 {
-		return true
-	}
-
-	for _, v := range snder.openContentTypes {
-		if v == contentType {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (snder *sender) Send(e email) error {
 	if len(e.Bodies) == 0 {
 		return fmt.Errorf("meilo: no email bodies found")
 	}
 
-	for _, v := range e.Bodies {
-		if !snder.open(v.ContentType) {
-			continue
-		}
+	content := fmt.Sprintf(
+		htmlTemplate,
 
-		cc := config[v.ContentType]
-		content := fmt.Sprintf(
-			cc.template,
+		html.EscapeString(e.Subject),
+		html.EscapeString(e.From),
+		strings.Join(e.To, ", "),
+		strings.Join(e.Cc, ", "),
+		strings.Join(e.Bcc, ", "),
+		html.EscapeString(e.Subject),
+	)
 
-			html.EscapeString(e.From),
-			strings.Join(e.To, ", "),
-			strings.Join(e.Cc, ", "),
-			strings.Join(e.Bcc, ", "),
-			html.EscapeString(e.Subject),
-			html.EscapeString(v.Content),
-		)
+	path, err := snder.saveEmailBody(content, e)
+	if err != nil {
+		return fmt.Errorf("meilo: failed to save email body: %w", err)
+	}
 
-		tmpName := strings.ReplaceAll(v.ContentType, "/", "_") + "_body"
-
-		path, err := snder.saveEmailBody(content, tmpName, e)
-		if err != nil {
-			return fmt.Errorf("meilo: failed to save email body: %w", err)
-		}
-
-		if err := browser.OpenFile(path); err != nil {
-			return fmt.Errorf("meilo: failed to open email in browser: %w", err)
-		}
+	if err := browser.OpenFile(path); err != nil {
+		return fmt.Errorf("meilo: failed to open email in browser: %w", err)
 	}
 
 	return nil
 }
 
-func (snder *sender) saveEmailBody(content, tmpName string, email email) (string, error) {
+func (snder *sender) saveEmailBody(content string, email email) (string, error) {
 	err := snder.saveAttachmentFiles(email.Attachments)
 	if err != nil {
 		return "", fmt.Errorf("meilo: failed to save attachments: %w", err)
 	}
 
-	tmpl := template.Must(template.New("mail").Parse(content))
+	tmpl := template.Must(template.New("mail").Funcs(
+		template.FuncMap{
+			"contains": strings.Contains,
+		},
+	).Parse(content))
+
 	var tpl bytes.Buffer
-	err = tmpl.Execute(&tpl, email.Attachments)
+	err = tmpl.Execute(&tpl, templConfig{
+		Bodies:      email.Bodies,
+		Attachments: email.Attachments,
+	})
+
 	if err != nil {
 		return "", fmt.Errorf("meilo: failed to execute template: %w", err)
 	}
 
-	filePath := fmt.Sprintf("%s_%s.html", tmpName, genID())
+	filePath := fmt.Sprintf("%s.html", genID())
 
 	path := path.Join(snder.dir, filePath)
 	err = os.WriteFile(path, tpl.Bytes(), 0644)

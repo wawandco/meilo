@@ -1,27 +1,68 @@
 
 
 <!DOCTYPE html>
-<html lang="en" class="h-screen">
+<html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<script src="https://cdn.tailwindcss.com"></script>
-	<title>Email</title>
+	<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+	<title>%v</title>
 </head>
-<body class="h-full w-full flex  items-center justify-center">
-	<div class="h-full w-[1000px] border">
-		<div class="email-information bg-white p-4 border-b ">
-			<p><span class="font-bold">From:</span> %v </p>
-			<p><span class="font-bold">To:</span> %v </p>
-			<p><span class="font-bold">Cc:</span> %v </p>
-			<p><span class="font-bold">Bcc:</span> %v </p>
-			<p><span class="font-bold">Subject:</span> %v</p>
-			{{range $i, $v := .}}
-				<p><span class="font-bold">Attachment: </span><a href="{{ $v.Path}}" class="underline text-blue-500" download="{{ $v.Path}}">{{ $v.Name }}</a></p>
-			{{end}}
-		</div>
+<body class="h-full w-full flex items-center justify-center p-8">
+	<div>
+		<p class="text-sm pb-1">Powered by Meilo</p>
+
+		<div class="h-full w-[1000px] border">
+			<div class="email-information bg-white p-4 border-b ">
+				<p><span class="font-bold">From:</span> %v </p>
+				<p><span class="font-bold">To:</span> %v </p>
+				<p><span class="font-bold">Cc:</span> %v </p>
+				<p><span class="font-bold">Bcc:</span> %v </p>
+				<p><span class="font-bold">Subject:</span> %v</p>
+				{{range $i, $v := .Attachments}}
+					<p><span class="font-bold">Attachment: </span><a href="{{ $v.Path}}" class="underline text-blue-500" download="{{ $v.Path}}">{{ $v.Name }}</a></p>
+				{{end}}
+			</div>
+			<div>
+				<div class="px-2 py-1 border-b">
+					<div>
+						{{range $i, $v := .Bodies}}
+							{{ $type := "Text"}}
+							{{ $hiddenFrom := "HTML"}}
+							{{ if contains $v.ContentType "html" }}
+								{{ $type = "HTML"}}
+								{{ $hiddenFrom = "Text"}}
+							{{end}}
 	
-		<iframe  class="w-full h-full"  srcdoc="%v"></iframe>
-	</div>
+							<button id="{{$type}}Button" class="hover:bg-gray-100 rounded-lg px-2 py-1 {{if eq $i 0}}bg-gray-100{{end}}" 
+							_="on click add .hidden to #{{$hiddenFrom}} end 
+							on click remove .hidden from #{{$type}} end
+							on click add .bg-gray-100 to #{{$type}}Button end
+							on click remove .bg-gray-100 from #{{$hiddenFrom}}Button end">
+								{{$type}}
+							</button>
+						{{end}}
+					</div>
+				</div>
+	
+				{{range $i, $v := .Bodies}}
+					{{ $type := "Text"}}
+					{{ $hiddenFrom := "HTML"}}
+					{{ if contains $v.ContentType "html" }}
+						{{ $type = "HTML"}}
+						{{ $hiddenFrom = "Text"}}
+					{{end}}
+					<div id="{{$type}}" class="{{if eq $i 0}}block{{else}}hidden{{end}}">
+						{{ if eq $type "HTML"}}
+							<iframe class="w-full h-[650px]" srcdoc="{{ $v.Content }}"></iframe>
+						{{else}}
+							<p class="p-4">{{ $v.Content }}</p>
+						{{end}}
+					</div>
+				{{end}}
+			</div>
+		</div>
+	</div>	
 </body>
 </html>
