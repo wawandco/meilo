@@ -35,17 +35,14 @@ This will start the SMTP server and return the credentials to be used in the ema
 2.  Send an email using the SMTP server
 
 ```go
-//Then you can use the credentials to send an email
-err = smtp.SendMail(
-	creds.Addr(), 				    // Addr
-	smtp.PlainAuth("", creds.User, creds.Password, creds.Host), // Authentication
+//Then you can use the credentials to build the SMTP auth 
+auth := smtp.PlainAuth("", creds.User, creds.Password, creds.Host),
+body:= []byte("Hello from meilo!")
+from := "username@example.com"
+to:= []string{"example@example.com"}
 
-    	"username@example.com", 		// From
-	[]string{"example@example.com"}, 	// To
-	
-	[]byte("Hello from meilo!"), // Body
-)
-
+// And then the creds instance has an Addr method to use when sending
+err = smtp.SendMail(creds.Addr() auth, from ,to, body)
 if err != nil {
         // Handle the sending error
         ...
@@ -54,10 +51,11 @@ if err != nil {
 ```
 ### Options explained
 
-- `meilo.WithDir(os.Getenv("TMP_DIR"))`: allows you to specify the directory where the emails will be stored, by default it will use the system's temporary directory.
+##### `meilo.WithDir(directory)`
+Allows to specify the directory where the emails will be stored, by default it will use the system's temporary directory.
 
-- `meilo.WithHost("smtp.example.com")`: allows you to specify the host of the SMTP server.
-
+##### `meilo.WithPort(port)`: 
+Allows to specify the port of the SMTP server. This is useful when running multiple services in your development environment.
 
 
 ## Roadmap / Ideas
