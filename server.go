@@ -13,15 +13,12 @@ type server struct {
 	Password string
 	User     string
 	Host     string
-
-	senderOpts []senderOption
 }
 
 func (bkd *server) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &session{
 		username: bkd.User,
 		password: bkd.Password,
-		sender:   newSender(bkd.senderOpts...),
 	}, nil
 }
 

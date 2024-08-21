@@ -29,6 +29,9 @@ var genID = func() string {
 var (
 	//go:embed html-tmpl.html
 	htmlTemplate string
+
+	//dir
+	dir string = os.TempDir()
 )
 
 type templConfig struct {
@@ -36,23 +39,7 @@ type templConfig struct {
 	Attachments []attachment
 }
 
-type sender struct {
-	dir string
-}
-
-func newSender(opts ...senderOption) *sender {
-	s := &sender{
-		dir: os.TempDir(),
-	}
-
-	for _, opt := range opts {
-		opt(s)
-	}
-
-	return s
-}
-
-func (snder *sender) Send(e email) error {
+func send(e email) error {
 	if len(e.Bodies) == 0 {
 		return fmt.Errorf("meilo: no email bodies found")
 	}
@@ -68,7 +55,7 @@ func (snder *sender) Send(e email) error {
 		html.EscapeString(e.Subject),
 	)
 
-	path, err := snder.saveEmailBody(content, e)
+	path, err := saveEmailBody(content, e)
 	if err != nil {
 		return fmt.Errorf("meilo: failed to save email body: %w", err)
 	}
@@ -80,8 +67,8 @@ func (snder *sender) Send(e email) error {
 	return nil
 }
 
-func (snder *sender) saveEmailBody(content string, email email) (string, error) {
-	err := snder.saveAttachmentFiles(email.Attachments)
+func saveEmailBody(content string, email email) (string, error) {
+	err := saveAttachmentFiles(email.Attachments)
 	if err != nil {
 		return "", fmt.Errorf("meilo: failed to save attachments: %w", err)
 	}
@@ -104,7 +91,7 @@ func (snder *sender) saveEmailBody(content string, email email) (string, error) 
 
 	filePath := fmt.Sprintf("%s.html", genID())
 
-	path := path.Join(snder.dir, filePath)
+	path := path.Join(dir, filePath)
 	err = os.WriteFile(path, tpl.Bytes(), 0644)
 	if err != nil {
 		return "", fmt.Errorf("meilo: failed to write email body: %w", err)
@@ -113,7 +100,7 @@ func (snder *sender) saveEmailBody(content string, email email) (string, error) 
 	return path, nil
 }
 
-func (snder *sender) saveAttachmentFiles(attachments []attachment) error {
+func saveAttachmentFiles(attachments []attachment) error {
 	for i, a := range attachments {
 		if len(a.Name) > 50 {
 			a.Name = a.Name[:50]
@@ -125,7 +112,7 @@ func (snder *sender) saveAttachmentFiles(attachments []attachment) error {
 		}
 
 		name := a.Name + genID()
-		filePath := path.Join(snder.dir, fmt.Sprintf("%s%s", name, exts[0]))
+		filePath := path.Join(dir, fmt.Sprintf("%s%s", name, exts[0]))
 
 		err = os.WriteFile(filePath, a.Data, 0644)
 		if err != nil {
