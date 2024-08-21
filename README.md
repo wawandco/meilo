@@ -16,39 +16,39 @@ go get github.com/wawandco/meilo
 You have the ability to set the options for the SMTP server, these are totally optional, if you don't set them, Meilo will use the default values.
 
 ```go
-    // Start the SMTP server
-	mailoCredentials, err := meilo.Start(
-        // Sender options
-		meilo.WithSenderOptions(
-			meilo.Only([]string{"text/html", "text/plain"}),
-			meilo.WithDir(os.Getenv("TMP_DIR")),
-		),
+// Start the SMTP server
+mailoCredentials, err := meilo.Start(
+	// Sender options
+	meilo.WithSenderOptions(
+		meilo.Only([]string{"text/html", "text/plain"}),
+		meilo.WithDir(os.Getenv("TMP_DIR")),
+	),
 
-        // SMTP server options
-		meilo.WithHost("smtp.example.com"),
-		meilo.WithUser("example@emai.com"),
-		meilo.WithPort("1025"),
-		meilo.WithPassword("password"),
-	)
+	// SMTP server options
+	meilo.WithHost("smtp.example.com"),
+	meilo.WithUser("example@emai.com"),
+	meilo.WithPort("1025"),
+	meilo.WithPassword("password"),
+)
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+if err != nil {
+	fmt.Println(err)
+	return
+}
 ```
 This will start the SMTP server and return the credentials to be used in the email sending process.
 
 2.  Send an email using the SMTP server
 
 ```go
-    //Then you can use the credentials to send an email
-	auth := smtp.PlainAuth("", mailoCredentials.User, mailoCredentials.Password, mailoCredentials.Host)
+//Then you can use the credentials to send an email
+auth := smtp.PlainAuth("", mailoCredentials.User, mailoCredentials.Password, mailoCredentials.Host)
 
-	addr := mailoCredentials.Host + ":" + mailoCredentials.Port
-	err = smtp.SendMail(addr, auth, "username@example.com", []string{"example@example.com"}, []byte("Hello from meilo!"))
-	if err != nil {
-		return
-	}
+addr := mailoCredentials.Host + ":" + mailoCredentials.Port
+err = smtp.SendMail(addr, auth, "username@example.com", []string{"example@example.com"}, []byte("Hello from meilo!"))
+if err != nil {
+	return
+}
 ```
 ### Options explained
 
