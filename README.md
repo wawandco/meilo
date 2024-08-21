@@ -30,10 +30,10 @@ creds, err := meilo.Start(
 	meilo.WithPort("1025"),
 	meilo.WithPassword("password"),
 )
-
+ 
 if err != nil {
-	fmt.Println(err)
-	return
+	// Handle the error
+	...
 }
 ```
 This will start the SMTP server and return the credentials to be used in the email sending process.
