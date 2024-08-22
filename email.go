@@ -85,7 +85,7 @@ func (e *email) ParseHeaders(mail *mail.Message) error {
 
 	//check if the subject is encoded
 	subject := mail.Header.Get("Subject")
-	if !strings.Contains(subject, "=?UTF-8?B?") {
+	if !strings.Contains(subject, "=?UTF-8?B?") || !strings.Contains(subject, "=?utf-8?B?") {
 		e.Subject = subject
 		return nil
 	}
@@ -196,6 +196,16 @@ func (e *email) ProcessAttachments(part *multipart.Part, contentType string) err
 		return fmt.Errorf("mailo: failed to decode attachment: %w", err)
 	}
 
+	if !strings.Contains(part.FileName(), "=?UTF-8?B?") || !strings.Contains(part.FileName(), "=?utf-8?B?") {
+		e.Attachments = append(e.Attachments, attachment{
+			Name:        part.FileName(),
+			ContentType: contentType,
+			Data:        decoded,
+		})
+
+		return nil
+	}
+
 	// decoded the name of the attachment
 	name := strings.ReplaceAll(part.FileName(), "=?UTF-8?B?", "")
 	name = strings.ReplaceAll(name, "=?utf-8?B?", "")
@@ -203,7 +213,7 @@ func (e *email) ProcessAttachments(part *multipart.Part, contentType string) err
 
 	decodedName, err := base64.StdEncoding.DecodeString(name)
 	if err != nil {
-		decodedName = []byte(part.FileName())
+		return fmt.Errorf("mailo: failed to decode attachment name: %w", err)
 	}
 
 	e.Attachments = append(e.Attachments, attachment{
