@@ -111,7 +111,7 @@ func saveAttachmentFiles(attachments []attachment) error {
 			return fmt.Errorf("meilo: failed to get extension for attachment %s: %w", a.Name, err)
 		}
 
-		name := a.Name + genID()
+		name := genID()
 		filePath := path.Join(dir, fmt.Sprintf("%s%s", name, exts[0]))
 
 		err = os.WriteFile(filePath, a.Data, 0644)
