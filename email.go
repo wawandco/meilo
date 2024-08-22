@@ -49,15 +49,8 @@ func (e *email) Parse() error {
 		return fmt.Errorf("mailo: failed to parse email: %w", err)
 	}
 
-	e.From = mail.Header.Get("From")
-	e.To = strings.Split(mail.Header.Get("To"), ",")
-	e.Cc = strings.Split(mail.Header.Get("Cc"), ",")
-	e.Bcc = strings.Split(mail.Header.Get("Bcc"), ",")
-
-	decode := new(mime.WordDecoder)
-	e.Subject, err = decode.Decode(mail.Header.Get("Subject"))
-	if err != nil {
-		return fmt.Errorf("mailo: failed to decode subject: %w", err)
+	if err := e.ParseHeaders(mail); err != nil {
+		return fmt.Errorf("mailo: failed to parse headers: %w", err)
 	}
 
 	mediaType, params, err := mime.ParseMediaType(mail.Header.Get("Content-Type"))
@@ -73,10 +66,40 @@ func (e *email) Parse() error {
 		return nil
 	}
 
+	fmt.Println("Parsing single part")
 	e.Bodies = append(e.Bodies, body{
 		ContentType: mediaType,
-		Content:     e.ReadPartContent(mail.Body),
+		Content:     e.ReadSinglePart(mail.Body),
 	})
+
+	return nil
+}
+
+// ParseHeaders parses the headers of the email and extracts the headers from it.
+// It returns an error if the headers could not be parsed.
+func (e *email) ParseHeaders(mail *mail.Message) error {
+	e.From = mail.Header.Get("From")
+	e.To = strings.Split(mail.Header.Get("To"), ",")
+	e.Cc = strings.Split(mail.Header.Get("Cc"), ",")
+	e.Bcc = strings.Split(mail.Header.Get("Bcc"), ",")
+
+	//check if the subject is encoded
+	subject := mail.Header.Get("Subject")
+	if !strings.Contains(subject, "=?UTF-8?B?") || !strings.Contains(subject, "=?utf-8?B?") {
+		e.Subject = subject
+		return nil
+	}
+
+	subject = strings.ReplaceAll(subject, "=?UTF-8?B?", "")
+	subject = strings.ReplaceAll(subject, "=?utf-8?B?", "")
+	subject = strings.ReplaceAll(subject, "?=", "")
+
+	decoded, err := base64.StdEncoding.DecodeString(subject)
+	if err != nil {
+		return fmt.Errorf("mailo: failed to decode subject: %w", err)
+	}
+
+	e.Subject = string(decoded)
 
 	return nil
 }
@@ -128,21 +151,10 @@ func (e *email) ParseMultipart(mr *multipart.Reader) error {
 // It decodes the content if it is encoded in base64 or quoted-printable.
 // It returns an empty string if the content could not be read.
 func (e *email) ReadPartContent(part io.Reader) string {
-	copy := func(part io.Reader) string {
-		buf := bytes.NewBuffer([]byte{})
-		_, err := io.Copy(buf, part)
-		if err != nil {
-			log.Printf("mailo: failed to copy part: %v", err)
-			return ""
-		}
-
-		return buf.String()
-	}
-
 	transferEncoding := part.(*multipart.Part).Header.Get("Content-Transfer-Encoding")
 	switch {
 	case strings.Contains(transferEncoding, "base64"):
-		decoded, err := base64.StdEncoding.DecodeString(copy(part))
+		decoded, err := base64.StdEncoding.DecodeString(e.ReadSinglePart(part))
 		if err != nil {
 			return ""
 		}
@@ -150,12 +162,24 @@ func (e *email) ReadPartContent(part io.Reader) string {
 
 	case strings.Contains(transferEncoding, "quoted-printable"):
 		qpReader := quotedprintable.NewReader(part)
-		return copy(qpReader)
+		return e.ReadSinglePart(qpReader)
 
 	default:
-		return copy(part)
+		return e.ReadSinglePart(part)
+	}
+}
+
+// ReadSinglePart reads the content of the part and returns it as a string.
+// It returns an empty string if the content could not be read.
+func (e *email) ReadSinglePart(part io.Reader) string {
+	buf := bytes.NewBuffer([]byte{})
+	_, err := io.Copy(buf, part)
+	if err != nil {
+		log.Printf("mailo: failed to copy part: %v", err)
+		return ""
 	}
 
+	return buf.String()
 }
 
 // ProcessAttachments processes the attachments of the email and appends them to the attachments slice.
@@ -172,9 +196,22 @@ func (e *email) ProcessAttachments(part *multipart.Part, contentType string) err
 		return fmt.Errorf("mailo: failed to decode attachment: %w", err)
 	}
 
-	//decoded the name of the attachment
-	encodedString := part.FileName()[10 : len(part.FileName())-2]
-	decodedName, err := base64.StdEncoding.DecodeString(encodedString)
+	if !strings.Contains(part.FileName(), "=?UTF-8?B?") || !strings.Contains(part.FileName(), "=?utf-8?B?") {
+		e.Attachments = append(e.Attachments, attachment{
+			Name:        part.FileName(),
+			ContentType: contentType,
+			Data:        decoded,
+		})
+
+		return nil
+	}
+
+	// decoded the name of the attachment
+	name := strings.ReplaceAll(part.FileName(), "=?UTF-8?B?", "")
+	name = strings.ReplaceAll(name, "=?utf-8?B?", "")
+	name = strings.ReplaceAll(name, "?=", "")
+
+	decodedName, err := base64.StdEncoding.DecodeString(name)
 	if err != nil {
 		return fmt.Errorf("mailo: failed to decode attachment name: %w", err)
 	}
