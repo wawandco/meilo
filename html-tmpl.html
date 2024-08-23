@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,19 +7,17 @@
 	<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 	<title>%v</title>
 </head>
-<body class="h-full w-full flex items-center justify-center p-8">
-	<div>
-		<p class="text-sm pb-1">Powered by Meilo</p>
-
-		<div class="h-full w-[1000px] border">
-			<div class="email-information bg-white p-4 border-b ">
+<body class="h-full w-full flex flex-col items-center justify-between p-8">
+	<div class="flex-grow flex items-center justify-center">
+		<div class="w-[1000px] border">
+			<div class="email-information bg-white p-4 border-b">
 				<p><span class="font-bold">From:</span> %v </p>
 				<p><span class="font-bold">To:</span> %v </p>
 				<p><span class="font-bold">Cc:</span> %v </p>
 				<p><span class="font-bold">Bcc:</span> %v </p>
 				<p><span class="font-bold">Subject:</span> %v</p>
 				{{range $i, $v := .Attachments}}
-					<p><span class="font-bold">Attachment: </span><a href="{{ $v.Path}}" class="underline text-blue-500" download="{{ $v.Path}}">{{ $v.Name }}</a></p>
+					<p><span class="font-bold">Attachment: </span><a href="{{ $v.Path }}" class="underline text-blue-500" download="{{ $v.Path }}">{{ $v.Name }}</a></p>
 				{{end}}
 			</div>
 			<div>
@@ -34,7 +30,6 @@
 								{{ $type = "HTML"}}
 								{{ $hiddenFrom = "Text"}}
 							{{end}}
-	
 							<button id="{{$type}}Button" class="hover:bg-gray-100 rounded-lg px-2 py-1 {{if eq $i 0}}bg-gray-100{{end}}" 
 							_="on click add .hidden to #{{$hiddenFrom}} end 
 							on click remove .hidden from #{{$type}} end
@@ -63,6 +58,7 @@
 				{{end}}
 			</div>
 		</div>
-	</div>	
+	</div>
+	<p class="text-sm pt-4">Powered by Meilo</p>
 </body>
 </html>
