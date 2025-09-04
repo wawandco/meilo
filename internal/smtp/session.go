@@ -1,4 +1,4 @@
-package meilo
+package smtp
 
 import (
 	"errors"
@@ -7,14 +7,14 @@ import (
 
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
+	"github.com/wawandco/meilo/internal/models"
 )
 
 var e = email{}
 
-// A Session is returned after successful login.
 type session struct {
-	username string
-	password string
+	username, password string
+	saveFn             func(e models.Email) error
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is supported.
@@ -54,9 +54,39 @@ func (s *session) Data(r io.Reader) error {
 func (s *session) Logout() error { return nil }
 
 func (s *session) Reset() {
-
 	if err := e.Parse(); err != nil {
 		log.Printf("meilo: failed to parse email: %v", err)
+	}
+
+	bodies := make([]models.Body, len(e.Bodies))
+	for i, b := range e.Bodies {
+		bodies[i] = models.Body{
+			ContentType: b.ContentType,
+			Content:     b.Content,
+		}
+	}
+
+	attachments := make([]models.Attachment, len(e.Attachments))
+	for i, a := range e.Attachments {
+		attachments[i] = models.Attachment{
+			Name:        a.Name,
+			Path:        a.Path,
+			ContentType: a.ContentType,
+			Data:        a.Data,
+		}
+	}
+
+	err := s.saveFn(models.Email{
+		Subject:     e.Subject,
+		Sender:      e.From,
+		Recipients:  e.To,
+		CC:          e.Cc,
+		BCC:         e.Bcc,
+		Bodies:      bodies,
+		Attachments: attachments,
+	})
+	if err != nil {
+		log.Printf("meilo: failed to save email: %v", err)
 	}
 
 	log.Println("Sending email...")

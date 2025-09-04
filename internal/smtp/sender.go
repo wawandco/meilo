@@ -1,4 +1,4 @@
-package meilo
+package smtp
 
 import (
 	"bytes"
@@ -30,11 +30,11 @@ var (
 	//go:embed html-tmpl.html
 	htmlTemplate string
 
-	//dir is the directory where the email body will be saved before opening in the browser
-	dir string = os.TempDir()
+	//Dir is the directory where the email body will be saved before opening in the browser
+	Dir = os.TempDir()
 )
 
-type templConfig struct {
+type templateConfig struct {
 	Bodies      []body
 	Attachments []attachment
 }
@@ -55,12 +55,12 @@ func send(e email) error {
 		html.EscapeString(e.Subject),
 	)
 
-	path, err := saveEmailBody(content, e)
+	p, err := saveEmailBody(content, e)
 	if err != nil {
 		return fmt.Errorf("meilo: failed to save email body: %w", err)
 	}
 
-	if err := browser.OpenFile(path); err != nil {
+	if err := browser.OpenFile(p); err != nil {
 		return fmt.Errorf("meilo: failed to open email in browser: %w", err)
 	}
 
@@ -80,7 +80,7 @@ func saveEmailBody(content string, email email) (string, error) {
 	).Parse(content))
 
 	var tpl bytes.Buffer
-	err = tmpl.Execute(&tpl, templConfig{
+	err = tmpl.Execute(&tpl, templateConfig{
 		Bodies:      email.Bodies,
 		Attachments: email.Attachments,
 	})
@@ -91,13 +91,13 @@ func saveEmailBody(content string, email email) (string, error) {
 
 	filePath := fmt.Sprintf("%s.html", genID())
 
-	path := path.Join(dir, filePath)
-	err = os.WriteFile(path, tpl.Bytes(), 0644)
+	p := path.Join(Dir, filePath)
+	err = os.WriteFile(p, tpl.Bytes(), 0644)
 	if err != nil {
 		return "", fmt.Errorf("meilo: failed to write email body: %w", err)
 	}
 
-	return path, nil
+	return p, nil
 }
 
 func saveAttachmentFiles(attachments []attachment) error {
@@ -112,7 +112,7 @@ func saveAttachmentFiles(attachments []attachment) error {
 		}
 
 		name := genID()
-		filePath := path.Join(dir, fmt.Sprintf("%s%s", name, exts[0]))
+		filePath := path.Join(Dir, fmt.Sprintf("%s%s", name, exts[0]))
 
 		err = os.WriteFile(filePath, a.Data, 0644)
 		if err != nil {
