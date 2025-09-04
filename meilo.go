@@ -2,29 +2,63 @@ package meilo
 
 import (
 	"fmt"
+	"log"
+
+	"github.com/wawandco/meilo/internal/database"
+	"github.com/wawandco/meilo/internal/services"
+	"github.com/wawandco/meilo/internal/smtp"
+	"github.com/wawandco/meilo/internal/web"
 )
 
-// serverOption is a function that configures the server.
-// It is used in the Start function.
-func Start(options ...serverOption) (server, error) {
-	s := server{
+// Start initializes an SMTP server with the provided configuration options.
+// Each serverOption applies specific settings during server creation.
+func Start(options ...serverOption) (smtp.Server, error) {
+	// initialize database
+	dbConnection := database.Initialize()
+
+	// run migrations
+	err := database.RunMigrations(dbConnection)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	emailService := services.NewEmailService(dbConnection)
+
+	s := smtp.Server{
 		Port:     "1025",
 		Password: "password",
 		User:     "username",
 		Host:     "localhost",
+		SaveFn:   emailService.Save,
 	}
 
 	for _, option := range options {
 		option(&s)
 	}
 
-	go func() error {
-		if err := s.run(); err != nil {
-			return fmt.Errorf("meilo: failed to start server: %v", err)
-		}
+	go func() {
+		err := func() error {
+			if err := s.Run(); err != nil {
+				return fmt.Errorf("meilo: failed to start server: %v", err)
+			}
 
-		return nil
+			return nil
+		}()
+		if err != nil {
+			log.Printf("meilo: failed to start server: %v", err)
+		}
 	}()
+
+	if s.EnableWeb {
+		webServer := web.NewServer("8080", emailService)
+		go func() {
+			err := webServer.Start()
+			if err != nil {
+				log.Printf("meilo: failed to start server: %v", err)
+				return
+			}
+		}()
+	}
 
 	return s, nil
 }
