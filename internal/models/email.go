@@ -35,6 +35,14 @@ type Attachment struct {
 	Data        []byte
 }
 
+func (e *Email) SetHTMLBody() {
+	for _, b := range e.Bodies {
+		if b.ContentType == textHtml {
+			e.Body = b.Content
+		}
+	}
+}
+
 func (e *Email) RawRecipients() string {
 	return strings.Join(e.Recipients, ",")
 }
