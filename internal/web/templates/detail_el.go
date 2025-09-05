@@ -7,11 +7,10 @@ import (
 	lucide "github.com/eduardolat/gomponents-lucide"
 	"github.com/wawandco/meilo/internal/models"
 	. "maragu.dev/gomponents"
-	//hx "maragu.dev/gomponents-htmx"
 	. "maragu.dev/gomponents/html"
 )
 
-func DetailEl(e models.Email) Node {
+func DetailEl(e *models.Email) Node {
 	return Group{
 		Div(
 			Class("flex-1 flex flex-col"),
