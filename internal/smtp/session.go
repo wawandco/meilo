@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"time"
 
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
@@ -14,7 +15,7 @@ var e = email{}
 
 type session struct {
 	username, password string
-	saveFn             func(e models.Email) error
+	saveFn             func(e models.Email)
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is supported.
@@ -76,7 +77,7 @@ func (s *session) Reset() {
 		}
 	}
 
-	err := s.saveFn(models.Email{
+	s.saveFn(models.Email{
 		Subject:     e.Subject,
 		Sender:      e.From,
 		Recipients:  e.To,
@@ -84,10 +85,8 @@ func (s *session) Reset() {
 		BCC:         e.Bcc,
 		Bodies:      bodies,
 		Attachments: attachments,
+		ReceivedAt:  time.Now(),
 	})
-	if err != nil {
-		log.Printf("meilo: failed to save email: %v", err)
-	}
 
 	log.Println("Sending email...")
 	if err := send(e); err != nil {

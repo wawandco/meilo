@@ -11,8 +11,8 @@ import (
 
 type Server struct {
 	Port, Password, User, Host string
-	EnableWeb                  bool
-	SaveFn                     func(models.Email) error
+	WebPort                    string
+	SaveFn                     func(models.Email)
 }
 
 func (bkd *Server) NewSession(c *smtp.Conn) (smtp.Session, error) {
