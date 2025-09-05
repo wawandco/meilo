@@ -16,8 +16,8 @@ func WithDir(directory string) serverOption {
 	}
 }
 
-func WithWeb() serverOption {
+func WithWeb(port string) serverOption {
 	return func(s *smtp.Server) {
-		s.EnableWeb = true
+		s.WebPort = port
 	}
 }
