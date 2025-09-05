@@ -32,7 +32,7 @@ func NewServer(port string, s *storage.MemoryEmailStore) *server {
 }
 
 func (s *server) Start() error {
-	slog.Info("Starting web server on", "port", s.port)
+	slog.Info("Starting meilo web server on", "port", s.port)
 
 	if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("meilo: failed to start web server: %w", err)
