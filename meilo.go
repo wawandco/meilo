@@ -4,32 +4,23 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/wawandco/meilo/internal/database"
-	"github.com/wawandco/meilo/internal/services"
 	"github.com/wawandco/meilo/internal/smtp"
+	"github.com/wawandco/meilo/internal/storage"
 	"github.com/wawandco/meilo/internal/web"
 )
 
 // Start initializes an SMTP server with the provided configuration options.
 // Each serverOption applies specific settings during server creation.
 func Start(options ...serverOption) (smtp.Server, error) {
-	// initialize database
-	dbConnection := database.Initialize()
-
-	// run migrations
-	err := database.RunMigrations(dbConnection)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	emailService := services.NewEmailService(dbConnection)
+	emailStorage := storage.NewMemoryEmailStore()
 
 	s := smtp.Server{
 		Port:     "1025",
 		Password: "password",
 		User:     "username",
 		Host:     "localhost",
-		SaveFn:   emailService.Save,
+		WebPort:  "",
+		SaveFn:   emailStorage.Add,
 	}
 
 	for _, option := range options {
@@ -49,8 +40,8 @@ func Start(options ...serverOption) (smtp.Server, error) {
 		}
 	}()
 
-	if s.EnableWeb {
-		webServer := web.NewServer("8080", emailService)
+	if s.WebPort != "" {
+		webServer := web.NewServer(s.WebPort, emailStorage)
 		go func() {
 			err := webServer.Start()
 			if err != nil {
