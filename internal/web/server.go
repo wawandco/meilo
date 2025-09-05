@@ -1,7 +1,6 @@
 package web
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -10,22 +9,22 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/wawandco/meilo/internal/services"
+	"github.com/wawandco/meilo/internal/storage"
 	"github.com/wawandco/meilo/internal/web/templates"
 
 	hxhttp "maragu.dev/gomponents-htmx/http"
 )
 
 type server struct {
-	port         string
-	httpServer   *http.Server
-	emailService *services.EmailService
+	port       string
+	httpServer *http.Server
+	storage    *storage.MemoryEmailStore
 }
 
-func NewServer(port string, emailService *services.EmailService) *server {
+func NewServer(port string, s *storage.MemoryEmailStore) *server {
 	server := &server{
-		port:         port,
-		emailService: emailService,
+		port:    port,
+		storage: s,
 	}
 	server.setupRoutes()
 
@@ -75,14 +74,10 @@ func (s *server) loggingMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *server) list(w http.ResponseWriter, r *http.Request) {
-	emails, err := s.emailService.List()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	emails := s.storage.List(10)
 
 	if err := templates.Layout(templates.LayoutProps{
-		YieldTitle: fmt.Sprintf("Recent %v emails listed", len(emails)),
+		YieldTitle: fmt.Sprintf("Recent %v emails listed", s.storage.Count()),
 		Yield:      templates.ListEl(emails),
 	}).Render(w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)
@@ -91,11 +86,7 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) refresh(w http.ResponseWriter, r *http.Request) {
-	emails, err := s.emailService.List()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	emails := s.storage.List(10)
 
 	if err := templates.RefreshEl(fmt.Sprintf("Recent %v emails listed", len(emails)), emails).Render(w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)
@@ -111,13 +102,10 @@ func (s *server) details(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email, err := s.emailService.FindById(idInt64)
+	email, err := s.storage.GetByID(idInt64)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			http.Error(w, "not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "not found", http.StatusNotFound)
+		return
 	}
 
 	if err = templates.DetailEl(email).Render(w); err != nil {
@@ -127,12 +115,7 @@ func (s *server) details(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) clean(w http.ResponseWriter, r *http.Request) {
-	err := s.emailService.DeleteAll()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	s.storage.Clear()
 	hxhttp.SetRedirect(w.Header(), "/")
 }
 
@@ -144,16 +127,8 @@ func (s *server) getLatestEmail(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	email, err := s.emailService.GetLatestEmailByRecipient(emailRecipient)
-	if err != nil {
-		slog.Error("Failed to get latest email",
-			"recipient", emailRecipient,
-			"error", err)
-		writeResponse(w, http.StatusNotFound, map[string]string{
-			"error": "no email found for this recipient",
-		})
-		return
-	}
+
+	email := s.storage.GetLatestEmailByRecipient(emailRecipient)
 
 	writeResponse(w, http.StatusOK, map[string]interface{}{
 		"email": email,
