@@ -1,15 +1,23 @@
 package meilo
 
-type serverOption func(*server)
+import "github.com/wawandco/meilo/internal/smtp"
+
+type serverOption func(*smtp.Server)
 
 func WithPort(port string) serverOption {
-	return func(s *server) {
+	return func(s *smtp.Server) {
 		s.Port = port
 	}
 }
 
 func WithDir(directory string) serverOption {
-	return func(s *server) {
-		dir = directory
+	return func(s *smtp.Server) {
+		smtp.Dir = directory
+	}
+}
+
+func WithWeb(port string) serverOption {
+	return func(s *smtp.Server) {
+		s.WebPort = port
 	}
 }

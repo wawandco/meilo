@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.6/dist/htmx.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <title>Meilo</title>
+    <link rel="icon" type="image/x-icon" sizes="16x16 32x32" href="https://wawand.co/images/favicon/favicon.ico">
+</head>
+<body class="bg-gray-50 font-sans">
+<div class="flex h-screen">
+    <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="p-4 border-b border-gray-200"><h1 class="text-lg font-semibold text-gray-800">Meilo Dashboard</h1>
+        </div>
+        <nav class="flex-1 p-4">
+            <ul class="space-y-2">
+                <li><a href="/"
+                       class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                    <icon data-lucide="inbox"></icon>
+                    <span> Inbox</span></a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="flex-1 flex flex-col">
+        <header class="bg-white border-b border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Inbox</h2>
+                <div class="flex items-center justify-between">
+                    <button hx-get="/refresh" hx-target="#main-content" hx-trigger="click" hx-swap="innerHTML"
+                            class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md">
+                        <icon data-lucide="refresh-cw"></icon>
+                    </button>
+                    <button class="p-2 text-gray-500 hover:text-red-700 hover:bg-red-100 rounded-md"
+                            hx-delete="/delete-all" hx-trigger="click" hx-swap="none"
+                            hx-confirm="⚠️ This action cannot be undone. Delete all emails?">
+                        <icon data-lucide="trash"></icon>
+                    </button>
+                </div>
+            </div>
+        </header>
+        {{template "email-list" .}}
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+    });
+</script>
+</body>
+</html>

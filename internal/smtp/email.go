@@ -1,4 +1,4 @@
-package meilo
+package smtp
 
 import (
 	"bytes"
@@ -29,6 +29,17 @@ type email struct {
 	Attachments []attachment
 }
 
+type body struct {
+	ContentType string
+	Content     string
+}
+type attachment struct {
+	Name        string
+	Path        string
+	ContentType string
+	Data        []byte
+}
+
 // Reset resets the email to its initial state.
 func (e *email) Reset() {
 	e.Subject = ""
@@ -44,22 +55,22 @@ func (e *email) Reset() {
 // Parse parses the email and extracts the headers, bodies and attachments from it.
 // It returns an error if the email could not be parsed.
 func (e *email) Parse() error {
-	mail, err := mail.ReadMessage(strings.NewReader(e.Body.String()))
+	msg, err := mail.ReadMessage(strings.NewReader(e.Body.String()))
 	if err != nil {
 		return fmt.Errorf("mailo: failed to parse email: %w", err)
 	}
 
-	if err := e.ParseHeaders(mail); err != nil {
+	if err := e.ParseHeaders(msg); err != nil {
 		return fmt.Errorf("mailo: failed to parse headers: %w", err)
 	}
 
-	mediaType, params, err := mime.ParseMediaType(mail.Header.Get("Content-Type"))
+	mediaType, params, err := mime.ParseMediaType(msg.Header.Get("Content-Type"))
 	if err != nil {
 		return fmt.Errorf("mailo: failed to parse media type: %w", err)
 	}
 
 	if strings.Contains(mediaType, "multipart") {
-		if err := e.ParseMultipart(multipart.NewReader(mail.Body, params["boundary"])); err != nil {
+		if err := e.ParseMultipart(multipart.NewReader(msg.Body, params["boundary"])); err != nil {
 			return fmt.Errorf("mailo: failed to parse multipart: %w", err)
 		}
 
@@ -69,7 +80,7 @@ func (e *email) Parse() error {
 	fmt.Println("Parsing single part")
 	e.Bodies = append(e.Bodies, body{
 		ContentType: mediaType,
-		Content:     e.ReadSinglePart(mail.Body),
+		Content:     e.ReadSinglePart(msg.Body),
 	})
 
 	return nil
@@ -223,16 +234,4 @@ func (e *email) ProcessAttachments(part *multipart.Part, contentType string) err
 	})
 
 	return nil
-}
-
-type attachment struct {
-	Name        string
-	Path        string
-	ContentType string
-	Data        []byte
-}
-
-type body struct {
-	ContentType string
-	Content     string
 }

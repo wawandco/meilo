@@ -1,0 +1,10 @@
+{{define "refresh"}}
+<div id="main-content">
+    <div class="bg-white border-b border-gray-200 p-4">
+        <div class="flex items-center space-x-4">{{.Title}}</div>
+    </div>
+    <div class="flex-1 overflow-y-auto bg-white">
+        {{template "email-list-items" .Emails}}
+    </div>
+</div>
+{{end}}

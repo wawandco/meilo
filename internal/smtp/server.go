@@ -1,4 +1,4 @@
-package meilo
+package smtp
 
 import (
 	"fmt"
@@ -6,28 +6,29 @@ import (
 	"time"
 
 	"github.com/emersion/go-smtp"
+	"github.com/wawandco/meilo/internal/web"
 )
 
-type server struct {
-	Port     string
-	Password string
-	User     string
-	Host     string
+type Server struct {
+	Port, Password, User, Host string
+	WebPort                    string
+	SaveFn                     func(web.Email)
 }
 
-func (bkd *server) NewSession(c *smtp.Conn) (smtp.Session, error) {
+func (bkd *Server) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return &session{
 		username: bkd.User,
 		password: bkd.Password,
+		saveFn:   bkd.SaveFn,
 	}, nil
 }
 
-func (bkd *server) Addr() string {
+func (bkd *Server) Addr() string {
 	return bkd.Host + ":" + bkd.Port
 }
 
-// Start starts the SMTP server with the given options.
-func (bkd *server) run() error {
+// Run starts the SMTP server with the given options.
+func (bkd *Server) Run() error {
 	stp := smtp.NewServer(bkd)
 	stp.Addr = bkd.Host + ":" + bkd.Port
 	stp.Domain = bkd.Host
