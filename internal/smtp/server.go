@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/emersion/go-smtp"
-	"github.com/wawandco/meilo/internal/models"
+	"github.com/wawandco/meilo/internal/web"
 )
 
 type Server struct {
 	Port, Password, User, Host string
 	WebPort                    string
-	SaveFn                     func(models.Email)
+	SaveFn                     func(web.Email)
 }
 
 func (bkd *Server) NewSession(c *smtp.Conn) (smtp.Session, error) {

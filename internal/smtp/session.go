@@ -8,14 +8,14 @@ import (
 
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
-	"github.com/wawandco/meilo/internal/models"
+	"github.com/wawandco/meilo/internal/web"
 )
 
 var e = email{}
 
 type session struct {
 	username, password string
-	saveFn             func(e models.Email)
+	saveFn             func(e web.Email)
 }
 
 // AuthMechanisms returns a slice of available auth mechanisms; only PLAIN is supported.
@@ -59,17 +59,17 @@ func (s *session) Reset() {
 		log.Printf("meilo: failed to parse email: %v", err)
 	}
 
-	bodies := make([]models.Body, len(e.Bodies))
+	bodies := make([]web.EmailBody, len(e.Bodies))
 	for i, b := range e.Bodies {
-		bodies[i] = models.Body{
+		bodies[i] = web.EmailBody{
 			ContentType: b.ContentType,
 			Content:     b.Content,
 		}
 	}
 
-	attachments := make([]models.Attachment, len(e.Attachments))
+	attachments := make([]web.EmailAttachment, len(e.Attachments))
 	for i, a := range e.Attachments {
-		attachments[i] = models.Attachment{
+		attachments[i] = web.EmailAttachment{
 			Name:        a.Name,
 			Path:        a.Path,
 			ContentType: a.ContentType,
@@ -77,7 +77,7 @@ func (s *session) Reset() {
 		}
 	}
 
-	s.saveFn(models.Email{
+	s.saveFn(web.Email{
 		Subject:     e.Subject,
 		Sender:      e.From,
 		Recipients:  e.To,
