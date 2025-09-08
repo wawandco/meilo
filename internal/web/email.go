@@ -1,4 +1,4 @@
-package models
+package web
 
 import (
 	"strings"
@@ -11,24 +11,24 @@ const (
 )
 
 type Email struct {
-	ID          int64        `json:"-"`
-	Subject     string       `json:"subject"`
-	Sender      string       `json:"sender"`
-	Recipients  []string     `json:"-"`
-	CC          []string     `json:"-"`
-	BCC         []string     `json:"-"`
-	Body        string       `json:"emailBody"`
-	Bodies      []Body       `json:"-"`
-	Attachments []Attachment `json:"-"`
-	ReceivedAt  time.Time    `json:"receivedAt"`
+	ID          int64             `json:"-"`
+	Subject     string            `json:"subject"`
+	Sender      string            `json:"sender"`
+	Recipients  []string          `json:"-"`
+	CC          []string          `json:"-"`
+	BCC         []string          `json:"-"`
+	Body        string            `json:"emailBody"`
+	Bodies      []EmailBody       `json:"-"`
+	Attachments []EmailAttachment `json:"-"`
+	ReceivedAt  time.Time         `json:"receivedAt"`
 }
 
-type Body struct {
+type EmailBody struct {
 	ContentType string
 	Content     string
 }
 
-type Attachment struct {
+type EmailAttachment struct {
 	Name        string
 	Path        string
 	ContentType string

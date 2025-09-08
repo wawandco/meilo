@@ -1,27 +1,25 @@
-package storage
+package web
 
 import (
 	"fmt"
 	"strings"
 	"sync"
-
-	"github.com/wawandco/meilo/internal/models"
 )
 
 type MemoryEmailStore struct {
-	emails []models.Email
+	emails []Email
 	mutex  sync.RWMutex
 	nextID int64
 }
 
 func NewMemoryEmailStore() *MemoryEmailStore {
 	return &MemoryEmailStore{
-		emails: make([]models.Email, 0),
+		emails: make([]Email, 0),
 		nextID: 1,
 	}
 }
 
-func (m *MemoryEmailStore) Add(email models.Email) {
+func (m *MemoryEmailStore) Add(email Email) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.emails = append(m.emails, email)
@@ -29,7 +27,7 @@ func (m *MemoryEmailStore) Add(email models.Email) {
 }
 
 // List returns all emails in reverse chronological order (latest first)
-func (m *MemoryEmailStore) List(limit int) []models.Email {
+func (m *MemoryEmailStore) List(limit int) []Email {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 
@@ -38,7 +36,7 @@ func (m *MemoryEmailStore) List(limit int) []models.Email {
 	}
 
 	// Return emails in reverse order (latest first)
-	result := make([]models.Email, limit)
+	result := make([]Email, limit)
 	start := len(m.emails) - limit
 	for i := 0; i < limit; i++ {
 		result[i] = m.emails[start+limit-1-i]
@@ -48,7 +46,7 @@ func (m *MemoryEmailStore) List(limit int) []models.Email {
 }
 
 // GetByID retrieves a specific email by ID
-func (m *MemoryEmailStore) GetByID(id int64) (*models.Email, error) {
+func (m *MemoryEmailStore) GetByID(id int64) (*Email, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 
@@ -76,7 +74,7 @@ func (m *MemoryEmailStore) Clear() {
 	m.nextID = 1
 }
 
-func (m *MemoryEmailStore) GetLatestEmailByRecipient(recipient string) *models.Email {
+func (m *MemoryEmailStore) GetLatestEmailByRecipient(recipient string) *Email {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	recipient = strings.TrimSpace(strings.ToLower(recipient))
