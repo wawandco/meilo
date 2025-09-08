@@ -3,16 +3,16 @@ package meilo
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/wawandco/meilo/internal/smtp"
-	"github.com/wawandco/meilo/internal/storage"
 	"github.com/wawandco/meilo/internal/web"
 )
 
 // Start initializes an SMTP server with the provided configuration options.
 // Each serverOption applies specific settings during server creation.
 func Start(options ...serverOption) (smtp.Server, error) {
-	emailStorage := storage.NewMemoryEmailStore()
+	emailStorage := web.NewMemoryEmailStore()
 
 	s := smtp.Server{
 		Port:     "1025",
@@ -40,7 +40,7 @@ func Start(options ...serverOption) (smtp.Server, error) {
 		}
 	}()
 
-	if s.WebPort != "" {
+	if s.WebPort != "" && isValidPort(s.WebPort) {
 		webServer := web.NewServer(s.WebPort, emailStorage)
 		go func() {
 			err := webServer.Start()
@@ -52,4 +52,17 @@ func Start(options ...serverOption) (smtp.Server, error) {
 	}
 
 	return s, nil
+}
+
+func isValidPort(port string) bool {
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		return false
+	}
+
+	if portInt < 1 || portInt > 65535 {
+		return false
+	}
+
+	return true
 }
