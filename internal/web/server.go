@@ -1,27 +1,38 @@
 package web
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
+)
 
-	"github.com/wawandco/meilo/internal/storage"
-	"github.com/wawandco/meilo/internal/web/templates"
+var (
+	//go:embed layout.html
+	layoutTmpl string
 
-	hxhttp "maragu.dev/gomponents-htmx/http"
+	//go:embed email-list.html
+	emailListTmpl string
+
+	//go:embed refresh.html
+	refreshTmpl string
+
+	//go:embed detail.html
+	detail string
 )
 
 type server struct {
 	port       string
 	httpServer *http.Server
-	storage    *storage.MemoryEmailStore
+	storage    *MemoryEmailStore
 }
 
-func NewServer(port string, s *storage.MemoryEmailStore) *server {
+func NewServer(port string, s *MemoryEmailStore) *server {
 	server := &server{
 		port:    port,
 		storage: s,
@@ -76,11 +87,25 @@ func (s *server) loggingMiddleware(next http.Handler) http.Handler {
 func (s *server) list(w http.ResponseWriter, r *http.Request) {
 	emails := s.storage.List(10)
 
-	if err := templates.Layout(templates.LayoutProps{
-		YieldTitle: fmt.Sprintf("Recent %v emails listed", s.storage.Count()),
-		Yield:      templates.ListEl(emails),
-	}).Render(w); err != nil {
-		http.Error(w, "render error", http.StatusInternalServerError)
+	funcMap := template.FuncMap{
+		"sub": func(a, b int) int { return a - b },
+	}
+
+	tmpl, err := template.New("layoutTmpl`").Funcs(funcMap).Parse(layoutTmpl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err = tmpl.Parse(emailListTmpl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, emails)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -88,8 +113,36 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 func (s *server) refresh(w http.ResponseWriter, r *http.Request) {
 	emails := s.storage.List(10)
 
-	if err := templates.RefreshEl(fmt.Sprintf("Recent %v emails listed", len(emails)), emails).Render(w); err != nil {
-		http.Error(w, "render error", http.StatusInternalServerError)
+	title := fmt.Sprintf("Recent %d emails listed", len(emails))
+
+	data := struct {
+		Title  string
+		Emails []Email
+	}{
+		Title:  title,
+		Emails: emails,
+	}
+
+	funcMap := template.FuncMap{
+		"sub": func(a, b int) int { return a - b },
+	}
+
+	tmpl, err := template.New("refresh").Funcs(funcMap).Parse(refreshTmpl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err = tmpl.Parse(emailListTmpl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Execute the refresh template
+	err = tmpl.ExecuteTemplate(w, "refresh", data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -108,15 +161,28 @@ func (s *server) details(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = templates.DetailEl(email).Render(w); err != nil {
-		http.Error(w, "render error", http.StatusInternalServerError)
+	funcMap := template.FuncMap{
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+	}
+
+	tmpl, err := template.New("details").Funcs(funcMap).Parse(detail)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	err = tmpl.Execute(w, email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func (s *server) clean(w http.ResponseWriter, r *http.Request) {
 	s.storage.Clear()
-	hxhttp.SetRedirect(w.Header(), "/")
+	w.Header().Set("HX-Redirect", "/")
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *server) getLatestEmail(w http.ResponseWriter, r *http.Request) {
