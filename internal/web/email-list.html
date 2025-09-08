@@ -1,0 +1,43 @@
+{{define "email-list"}}
+<div id="main-content">
+    <div class="bg-white border-b border-gray-200 p-4">
+        <div class="flex items-center space-x-4">Recent {{len .}} emails listed</div>
+    </div>
+    <div class="flex-1 overflow-y-auto bg-white">
+        {{template "email-list-items" .}}
+    </div>
+</div>
+{{end}}
+
+{{define "email-list-items"}}
+{{range $index, $email := .}}
+<div class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+     hx-get="/details/{{$email.ID}}"
+     hx-swap="innerHTML"
+     hx-trigger="click"
+     hx-target="#main-content">
+    <div class="flex items-center p-4">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center space-x-3">
+                    <span class="font-semibold text-gray-900 text-sm">From: {{$email.Sender}}</span>
+                </div>
+                <span class="text-xs text-gray-500 whitespace-nowrap">{{$email.ReceivedAt.Format "02 Jan 06 15:04 -07"}}</span>
+            </div>
+            {{if $email.Subject}}
+            <div class="text-sm text-gray-600 truncate mb-1">{{$email.Subject}}</div>
+            {{end}}
+            {{if $email.Recipients}}
+            <div class="text-sm text-gray-600 truncate mb-1">To: {{index $email.Recipients 0}}{{if gt (len
+                $email.Recipients) 1}} and others{{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{else}}
+<div class="flex items-center p-4 text-center text-gray-500">
+    No emails found
+</div>
+{{end}}
+{{end}}
