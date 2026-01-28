@@ -52,6 +52,7 @@ func send(e email) error {
 		strings.Join(e.To, ", "),
 		strings.Join(e.Cc, ", "),
 		strings.Join(e.Bcc, ", "),
+		html.EscapeString(e.ReplyTo),
 		html.EscapeString(e.Subject),
 	)
 
