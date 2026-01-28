@@ -24,6 +24,7 @@ type email struct {
 	To          []string
 	Cc          []string
 	Bcc         []string
+	ReplyTo     []string
 	Body        bytes.Buffer
 	Bodies      []body
 	Attachments []attachment
@@ -36,6 +37,7 @@ func (e *email) Reset() {
 	e.To = nil
 	e.Cc = nil
 	e.Bcc = nil
+	e.ReplyTo = nil
 	e.Body.Reset()
 	e.Bodies = nil
 	e.Attachments = nil
@@ -82,6 +84,7 @@ func (e *email) ParseHeaders(mail *mail.Message) error {
 	e.To = strings.Split(mail.Header.Get("To"), ",")
 	e.Cc = strings.Split(mail.Header.Get("Cc"), ",")
 	e.Bcc = strings.Split(mail.Header.Get("Bcc"), ",")
+	e.ReplyTo = strings.Split(mail.Header.Get("Reply-To"), ",")
 
 	//check if the subject is encoded
 	subject := mail.Header.Get("Subject")
